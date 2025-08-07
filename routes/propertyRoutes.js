@@ -1,5 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
+import {authorizeRoles} from "../middleware/roleMiddleware.js"
 
 import {
   addFavourite,
@@ -17,10 +18,12 @@ import {
 
 const router = express.Router();
 
+// ONLY ADMIN CAN VIEW ALL PROPERTY
+router.get("/listings", protect, authorizeRoles("admin"), viewAllListedProperty);
+
 
 // ROUTES FOR PROPERTY LISTINGS
 router.post('/listings', protect, listProperty);
-router.get("/listings", protect, viewAllListedProperty);
 router.get("/listings/:landlordId/properties", protect, getLandlordProperties);
 router.get("/listings/detail/:id", protect, viewPropertyById);
 router.put("/listings/update/:id", protect, updateAPropertyById);
