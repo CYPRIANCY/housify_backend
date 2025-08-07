@@ -23,6 +23,7 @@ router.post('/refresh-token', refreshAccessToken);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 
+
 // FOR ADMIN ONLY
 router.get('/users', protect, authorizeRoles, handleGetAllUsers);
 
