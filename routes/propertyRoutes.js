@@ -21,7 +21,6 @@ const router = express.Router();
 // ONLY ADMIN CAN VIEW ALL PROPERTY
 router.get("/listings", protect, authorizeRoles("admin"), viewAllListedProperty);
 
-
 // ROUTES FOR PROPERTY LISTINGS
 router.post('/listings', protect, listProperty);
 router.get("/listings/:landlordId/properties", protect, getLandlordProperties);
