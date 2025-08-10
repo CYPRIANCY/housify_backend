@@ -41,7 +41,7 @@ const limiter = rateLimit({
   max: 100, // limit per IP
   message: 'Too many requests from this IP, please try again after 10 minutes',
 });
-app.use('/api', propertyRoute);
+app.use('/api/property', propertyRoute);
 
 // JSON & Form Parsers
 app.use(express.json({ limit: '10kb' }));

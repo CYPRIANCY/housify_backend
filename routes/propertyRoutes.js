@@ -15,6 +15,7 @@ import {
   viewAllListedProperty as viewAllListedProperty,
   viewPropertyById as viewPropertyById
 } from '../controllers/propertyController.js';
+import upload from '../utils/multer.js';
 
 const router = express.Router();
 
@@ -27,6 +28,10 @@ router.get("/listings/:landlordId/properties", protect, getLandlordProperties);
 router.get("/listings/detail/:id", protect, viewPropertyById);
 router.put("/listings/update/:id", protect, updateAPropertyById);
 router.delete("/listings/delete/:id", protect, deletePropertyById);
+
+// IMAGE UPLOADE
+router.post("/upload", protect, upload.single("image"));
+
 
 
 // ROUTES FOR FAVOURITES

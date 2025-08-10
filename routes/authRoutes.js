@@ -25,7 +25,7 @@ router.post('/reset-password', resetPassword);
 
 
 // FOR ADMIN ONLY
-router.get('/users', protect, authorizeRoles, handleGetAllUsers);
+router.get('/users', protect, authorizeRoles("admin"), handleGetAllUsers);
 
 
 

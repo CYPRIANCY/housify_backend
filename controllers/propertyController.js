@@ -23,8 +23,8 @@ const {
         location,
         features,
         media,
-    contact,
-    status,
+        contact,
+        status,
         condition,
     ownership,
         propertyType
@@ -46,6 +46,20 @@ const {
             status,
             condition,
             userId: req.user.id,
+            media: {
+            images:{
+                    url: req.file.path,
+                    public_id: req.file.filename
+                },
+            videoTour:{
+                    url: req.file.path,
+                    public_id: req.file.filename
+                },
+            floorPlan:{
+                    url: req.file.path,
+                    public_id: req.file.filename
+            }
+            },
             metadata: {
                 dateListed: new Date(),
                 isVerified: false,
@@ -179,8 +193,18 @@ export const deletePropertyById = async (req, res) => {
       
       
       const deletedProperty = await Property.findById(id);
+      if (!deletedProperty) {
+          return res.status(404).json({
+              success: false,
+              messaeg: "Property not found"
+          });
+      }
       
-      await Property.findByIdAndUpdate(deletedProperty);
+      if (deletedProperty.media.images && deletedProperty.media.images.public_id) {
+          await cloudinary.uploader.destroy(deletedProperty.media.images.public_id);
+      }
+
+      await Property.findByIdAndDelete(deletedProperty);
       res.status(200).json({
           success: true,
           message: "Propert deleted successfully"

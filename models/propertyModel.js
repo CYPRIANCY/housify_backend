@@ -34,9 +34,18 @@ const propertySchema = new mongoose.Schema({
     },
 
     media: {
-        images: { type: String },
-        videoTour: { type: String },
-        floorPlan: { type: String }
+        images: {
+            url: { type: String, required: true },
+            public_id: {type: String, required: true}
+        },
+        videoTour: { 
+            url: { type: String, required: true },
+            public_id: {type: String, required: true}
+         },
+        floorPlan: { 
+            url: { type: String, required: true },
+            public_id: {type: String, required: true}
+         }
     },
 
     contact: {
