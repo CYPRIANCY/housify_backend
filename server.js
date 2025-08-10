@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js'; // 👈 we will create this
 import connectDB from './config/db.js'; // 👈 database connection
+import propertyRoute from "./routes/propertyRoutes.js"
 
 dotenv.config();
 
@@ -40,7 +41,7 @@ const limiter = rateLimit({
   max: 100, // limit per IP
   message: 'Too many requests from this IP, please try again after 10 minutes',
 });
-app.use('/api', limiter);
+app.use('/api/property', propertyRoute);
 
 // JSON & Form Parsers
 app.use(express.json({ limit: '10kb' }));
@@ -52,7 +53,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // === Routes ===
-app.use('/api/auth', authRoutes); // 👈 Auth API
+app.use('/api/auth', limiter, authRoutes); // 👈 Auth API
 
 // === Error Handlers ===
 app.use(notFound);
