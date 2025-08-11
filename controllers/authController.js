@@ -6,7 +6,7 @@ import { sendOTPEmail } from "../utils/sendEmail.js";
 
 // Generate short-lived access token
 const generateAccessToken = (user) => {
-  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_ACCESS_SECRET, {
+  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: "15m",
   });
 };
@@ -28,6 +28,7 @@ export const registerUser = async (req, res) => {
     return res.status(403).json({ message: "You are not allowed to register as admin" });
 
   const existingUser = await User.findOne({ email });
+
   if (existingUser) return res.status(400).json({ message: "Email already exists" });
 
   const otp = crypto.randomInt(100000, 999999).toString();
@@ -56,11 +57,13 @@ export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
-  if (!user || !(await user.matchPassword(password)))
+  if (!user || !(await user.matchPassword(password))){
     return res.status(401).json({ message: "Invalid email or password" });
+  }
 
-  if (!user.isVerified)
+  if (!user.isVerified){
     return res.status(403).json({ message: "Email not verified. Please verify to login." });
+  }
 
   const accessToken = generateAccessToken(user);
   const refreshToken = generateRefreshToken(user);
@@ -78,9 +81,10 @@ export const loginUser = async (req, res) => {
     sameSite: "Strict",
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
   });
-
+console.log("User role:", user.role)
   res.status(200).json({
     message: "Login successful",
+    accessToken,
     user: { id: user._id, role: user.role },
   });
 };
@@ -91,7 +95,7 @@ export const refreshAccessToken = async (req, res) => {
   if (!token) return res.status(401).json({ message: "Refresh token missing" });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     if (!user) return res.status(401).json({ message: "Invalid token" });
 

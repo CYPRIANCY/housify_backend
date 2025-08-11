@@ -8,12 +8,13 @@ import cookieParser from 'cookie-parser';
 import mongoose from 'mongoose';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js'; // 👈 we will create this
+import adminRoutes from './routes/adminRoutes.js'
 import connectDB from './config/db.js'; // 👈 database connection
 
 dotenv.config();
 
 // === Connect to DB ===
-connectDB();
+// connectDB();
 
 const app = express();
 
@@ -53,6 +54,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // === Routes ===
 app.use('/api/auth', authRoutes); // 👈 Auth API
+app.use('/api/admin', adminRoutes); // 👈 Admin API
 
 // === Error Handlers ===
 app.use(notFound);
@@ -60,6 +62,14 @@ app.use(errorHandler);
 
 // === Start Server ===
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-});
+
+connectDB()
+.then( () => {
+          
+    console.log("MongoDB connected Successfully")
+
+    app.listen(PORT, () => {
+      console.log(`✅ Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+    });
+
+})
