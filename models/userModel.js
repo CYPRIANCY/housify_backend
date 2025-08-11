@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { type } from "os";
 
 const userSchema = new mongoose.Schema(
   {
@@ -16,7 +17,9 @@ const userSchema = new mongoose.Schema(
 
     otp: String,
     otpExpires: Date,
+    favourites: [{type: mongoose.Schema.Types.ObjectId, ref: "Property",}]
   },
+  
   { timestamps: true }
 );
 
