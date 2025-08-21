@@ -1,20 +1,58 @@
-import History from "../models/historyModel";
+import History from "../models/historyModel.js";
+import Property from "../models/propertyModel.js";
 
 
 // GET HISTORY 
 export const getUserHistory = async (req, res) => {
+  try {
+    let history;
+
+    if (req.user.role === "landlord") {
+      // Landlord: get history of their own properties
+      const properties = await Property.find({ userId: req.user.id }).select("_id");
+      const propertyIds = properties.map(p => p._id);
+
+      history = await History.find({ propertyId: { $in: propertyIds } })
+        .populate("userId", "name email")
+        .populate("propertyId", "title location");
+    } 
+    else if (req.user.role === "admin") {
+      // Admin: see all history
+      history = await History.find()
+        .populate("userId", "name email")
+        .populate("propertyId", "title location");
+    } 
+    else {
+      // Other roles: only their own actions
+      history = await History.find({ userId: req.user.id })
+        .populate("userId", "name email")
+        .populate("propertyId", "title location");
+    }
+
+    res.json({ success: true, history });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+// GET HISTORY BY ID
+export const getHistoryById = async (req, res) => {
     try {
-        const userId = req.params.userId;
-        const history = await History.find({ userId })
-            .populate("propertyId", "title location")
-            .sort({ createdAt: -1 });
+        const historyId = req.params.historyId;
+        const history = await History.findById(historyId)
+            .populate("userId", "name email")
+            .populate("propertyId", "title location");
+
+        if (!history) {
+            return res.status(404).json({ message: "History not found" });
+        }
 
         res.json(history);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-
 
 // ADD HISTORY
 export const addHistory = async (req, res) => {
@@ -37,74 +75,5 @@ export const addHistory = async (req, res) => {
     }
 };
 
-// UPDATE HISTORY
-export const updateHistory = async (req, res) => {
-    try {
-        const { action, endDate, notes, status } = req.body;
-        const historyId = req.params.historyId;
-
-        const updatedHistory = await History.findByIdAndUpdate(
-            historyId,
-            { action, endDate, notes, status },
-            { new: true }
-        );
-
-        if (!updatedHistory) {
-            return res.status(404).json({ message: "History not found" });
-        }
-
-        res.json(updatedHistory);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
 
 
-// DELETE HISTORY
-export const deleteHistory = async (req, res) => {
-    try {
-        const historyId = req.params.historyId;
-        const deletedHistory = await History.findByIdAndDelete(historyId);
-
-        if (!deletedHistory) {
-            return res.status(404).json({ message: "History not found" });
-        }
-
-        res.json({ message: "History deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// GET HISTORY BY PROPERTY
-export const getHistoryByProperty = async (req, res) => {
-    try {
-        const propertyId = req.params.propertyId;
-        const history = await History.find({ propertyId })
-            .populate("userId", "name email")
-            .sort({ createdAt: -1 });
-
-        res.json(history);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-
-// GET HISTORY BY ID
-export const getHistoryById = async (req, res) => {
-    try {
-        const historyId = req.params.historyId;
-        const history = await History.findById(historyId)
-            .populate("userId", "name email")
-            .populate("propertyId", "title location");
-
-        if (!history) {
-            return res.status(404).json({ message: "History not found" });
-        }
-
-        res.json(history);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};

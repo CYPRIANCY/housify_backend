@@ -1,4 +1,5 @@
-import Reviews from "../models/reviewsModel";
+import Reviews from "../models/reviewsModel.js";
+import User from "../models/userModel.js";
 
 
 
@@ -19,45 +20,65 @@ export const getReviews = async (req, res) => {
 
 // ADD LANDLORD REVIEW
 export const addLandlordReview = async (req, res) => {
-    try {
-        const { landlordId } = req.params;
-        if (!landlordId) {
-            return res.status(400).json({ message: "Landlord ID is required" });
-        }
-        const { reviewer, rating, comment } = req.body;
-        const newReview = new Reviews({
-            reviewer,
-            reviewee: landlordId,
-            rating,
-            comment
-        });
-        await newReview.save();
-        res.status(201).json(newReview);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    };
+  try {
+    const { landlordId } = req.params;
+    const { rating, comment } = req.body;
+
+    const reviewer = req.user.id;
+
+    if (!landlordId || !reviewer) {
+      return res.status(400).json({ message: "Landlord ID and Reviewer are required" });
+    }
+
+    const reviewerExists = await User.findById(reviewer);
+    if (!reviewerExists) {
+      return res.status(404).json({ message: "Reviewer not found" });
+    }
+
+    const newReview = new Reviews({
+      reviewer,
+      reviewee: landlordId,
+      rating,
+      comment
+    });
+
+    await newReview.save();
+    res.status(201).json(newReview);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 
 // ADD TENANT REVIEW
 export const addTenantReview = async (req, res) => {
-    try {
-        const { tenantId } = req.params;
-        if (!tenantId) {
-            return res.status(400).json({ message: "Tenant ID is required" });
-        }
-        const { reviewer, rating, comment } = req.body;
-        const newReview = new Reviews({
-            reviewer,
-            reviewee: tenantId,
-            rating,
-            comment
-        });
-        await newReview.save();
-        res.status(201).json(newReview);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    };
+  try {
+    const { tenantId } = req.params;
+    const { rating, comment } = req.body;
+
+    const reviewer = req.user.id;
+
+    if (!tenantId || !reviewer) {
+      return res.status(400).json({ message: "Landlord ID and Reviewer are required" });
+    }
+
+    const reviewerExists = await User.findById(reviewer);
+    if (!reviewerExists) {
+      return res.status(404).json({ message: "Reviewer not found" });
+    }
+
+    const newReview = new Reviews({
+      reviewer,
+      reviewee: tenantId,
+      rating,
+      comment
+    });
+
+    await newReview.save();
+    res.status(201).json(newReview);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 

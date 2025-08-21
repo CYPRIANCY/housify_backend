@@ -6,7 +6,7 @@ import {
     getLandlordReviews,
     getTenantReviews,
     getReviewById,
-    deletedReview,
+    deleteReview,
     getReviews
 } from '../controllers/reviewsController.js';
 import { protect } from '../middleware/authMiddleware.js';
@@ -16,14 +16,15 @@ const router = express.Router();
 
 
 // REVIEWS ROUTES
-router.post('/reviews/landlord/:landlordId', protect, addLandlordReview);
-router.post('/reviews/tenant/:tenantId', protect, addTenantReview);
-router.get('/reviews/landlord/:landlordId', protect, getLandlordReviews);
-router.get('/reviews/tenant/:tenantId', protect, getTenantReviews);
-router.get('/reviews/:reviewId', protect, getReviewById);
+router.post('/landlord/:landlordId', protect, addLandlordReview);
+router.post('/tenant/:tenantId', protect, addTenantReview);
+router.get('/landlord/:landlordId', protect, getLandlordReviews);
+router.get('/tenant/:tenantId', protect, getTenantReviews);
+router.get('/:reviewId', protect, getReviewById);
 
 
 // ADMIN ONLY
-router.delete('/reviews/:reviewId', protect, authorizeRoles("admin"), deletedReview);
-router.get('/reviews', protect, authorizeRoles("admin"), getReviews);
+router.delete('/:reviewId', protect, authorizeRoles("admin"), deleteReview);
+router.get('/', protect, authorizeRoles("admin"), getReviews);
 
+export default router;
