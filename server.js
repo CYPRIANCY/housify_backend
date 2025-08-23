@@ -12,6 +12,11 @@ import adminRoutes from './routes/adminRoutes.js';
 import connectDB from './config/db.js';
 import propertyRoutes from "./routes/propertyRoutes.js";
 import verificationRoutes from './routes/verificationRoutes.js'
+import propertyRoute from "./routes/propertyRoutes.js";
+import historyRoutes from './routes/historyRoutes.js';
+import reviewsRoutes from './routes/reviewsRoutes.js';
+
+
 
 dotenv.config();
 
@@ -48,6 +53,10 @@ app.use('/api/auth', limiter, authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/property', propertyRoutes);
 app.use('/api/verification', verificationRoutes);
+app.use('/api/property', propertyRoute);
+app.use('/api/history', historyRoutes);
+app.use('/api/reviews', reviewsRoutes);
+
 
 // === Error Handlers ===
 app.use(notFound);
