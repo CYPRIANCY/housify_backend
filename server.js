@@ -11,6 +11,9 @@ import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import connectDB from './config/db.js';
 import propertyRoute from "./routes/propertyRoutes.js";
+import historyRoutes from './routes/historyRoutes.js';
+import reviewsRoutes from './routes/reviewsRoutes.js';
+
 
 dotenv.config();
 
@@ -46,6 +49,8 @@ if (process.env.NODE_ENV === 'development') {
 app.use('/api/auth', limiter, authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/property', propertyRoute);
+app.use('/api/history', historyRoutes);
+app.use('/api/reviews', reviewsRoutes);
 
 // === Error Handlers ===
 app.use(notFound);

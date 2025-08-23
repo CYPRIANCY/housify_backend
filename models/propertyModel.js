@@ -34,19 +34,19 @@ const propertySchema = new mongoose.Schema({
     },
 
     media: {
-        images: {
-            url: { type: String, required: true },
-            public_id: {type: String, required: true}
-        },
-        videoTour: { 
-            url: { type: String, required: true },
-            public_id: {type: String, required: true}
-         },
-        floorPlan: { 
-            url: { type: String, required: true },
-            public_id: {type: String, required: true}
-         }
-    },
+        images: [
+    {
+      url: { type: String, required: true },
+      public_id: { type: String, required: true }
+    }
+  ],
+  videos: [
+    {
+      url: { type: String, required: true },
+      public_id: { type: String, required: true }
+    }
+  ]
+},
 
     contact: {
         listedBy: { type: String },

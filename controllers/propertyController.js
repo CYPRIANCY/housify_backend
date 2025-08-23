@@ -1,84 +1,75 @@
 import User from "../models/userModel.js";
-import Property from "../models/propertyModel.js"
-import jwt, { decode } from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
-import { sendOTPEmail } from "../utils/sendEmail.js";
+import Property from "../models/propertyModel.js";
 import Report from "../models/reportModel.js";
+import { logHistory } from "./historyLogger.js";
+import { v2 as cloudinary } from "cloudinary";
 
-//PROPERTY LISTING
+// LIST A PROPERTY
 export const listProperty = async (req, res) => {
-    const token = req.cookies.accessToken;
-        if (!token) {
-            return res.status(404).json({success: false, message: "User not found: please login"})
-        }
+  try {
+    const {
+      title,
+      description,
+      listingType,
+      price,
+      currency,
+      location,
+      features,
+      contact,
+      ownership,
+      propertyType,
+      status,
+      condition,
+    } = req.body;
 
-    try {
-const { 
-        title,
-        description,
-        listingType,
-        price,
-        currency,
-        location,
-        features,
-        media,
-        contact,
-        status,
-        condition,
-    ownership,
-        propertyType
-        } = req.body;
+    const property = new Property({
+      title,
+      description,
+      listingType,
+      price,
+      currency,
+      location,
+      features,
+      contact,
+      ownership,
+      propertyType,
+      status,
+      condition,
+      userId: req.user.id,
+      media: {
+        images: req.file && req.file.path ? { url: req.file.path, public_id: req.file.filename } : null,
+        videos: req.files && req.files.video ? { url: req.files.video[0].path, public_id: req.files.video[0].filename } : null,
+      },
+      metadata: {
+        dateListed: new Date(),
+        isVerified: false,
+        views: 0,
+        status: "active",
+      },
+    });
 
-       
-        const property = new Property({
-            title,
-            description,
-            listingType,
-            price,
-            currency,
-            location,
-            features,
-            media,
-            contact,
-            ownership,
-            propertyType,
-            status,
-            condition,
-            userId: req.user.id,
-            media: {
-            images:{
-                    url: req.file.path,
-                    public_id: req.file.filename
-                },
-            videoTour:{
-                    url: req.file.path,
-                    public_id: req.file.filename
-                },
-            floorPlan:{
-                    url: req.file.path,
-                    public_id: req.file.filename
-            }
-            },
-            metadata: {
-                dateListed: new Date(),
-                isVerified: false,
-                views: 0,
-                status: "active"
-            }
-        });
-        await property.save();
+    await property.save();
+      
+    // Log history
+   const history = await logHistory({
+  userId: req.user._id,
+  propertyId: property._id,
+  role: req.user.role,
+  action: "Property Listed",
+  notes: "Landlord listed a new property",
+});
 
-        res.status(201).json({
-            success: true,
-            message: "Property listed successfully",
-            property
-         }
-            
-        )  
-    } catch (error) {
-        res.status(500).json({success: false, message: error.message})
-    }
+console.log("History logged:", history);
+      
+    res.status(201).json({
+      success: true,
+      message: "Property listed successfully",
+      property,
+      
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
 
 //VIEW ALL PROPERTY LISTED BY ADMIN
