@@ -1,6 +1,5 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
-import {authorizeRoles} from "../middleware/roleMiddleware.js"
 
 import {
   addFavourite,
@@ -12,15 +11,11 @@ import {
   removeFavourite,
   reportProperty,
   updateAPropertyById,
-  viewAllListedProperty as viewAllListedProperty,
   viewPropertyById as viewPropertyById
 } from '../controllers/propertyController.js';
 import upload from '../utils/multer.js';
 
 const router = express.Router();
-
-// ONLY ADMIN CAN VIEW ALL PROPERTY
-router.get("/listings", protect, authorizeRoles("admin"), viewAllListedProperty);
 
 // ROUTES FOR PROPERTY LISTINGS
 router.post('/listings', protect, listProperty);

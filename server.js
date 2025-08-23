@@ -10,7 +10,8 @@ import { notFound, errorHandler } from './middleware/errorHandler.js';
 import authRoutes from './routes/authRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import connectDB from './config/db.js';
-import propertyRoute from "./routes/propertyRoutes.js";
+import propertyRoutes from "./routes/propertyRoutes.js";
+import verificationRoutes from './routes/verificationRoutes.js'
 
 dotenv.config();
 
@@ -45,7 +46,8 @@ if (process.env.NODE_ENV === 'development') {
 // === Routes ===
 app.use('/api/auth', limiter, authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/property', propertyRoute);
+app.use('/api/property', propertyRoutes);
+app.use('/api/verification', verificationRoutes);
 
 // === Error Handlers ===
 app.use(notFound);

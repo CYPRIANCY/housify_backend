@@ -9,7 +9,8 @@ const propertySchema = new mongoose.Schema({
     propertyType: {type: String, default: ""},
     price: { type: Number, required: true },
     currency: { type: String, default: "NGN" },
-    
+    blockNumber: { type: String }, // e.g., A1, B2, Flat 3
+
     location: {
         address: { type: String },
         city: { type: String },
@@ -89,6 +90,9 @@ const propertySchema = new mongoose.Schema({
         winner: {type: String, default: ""}
     }
 
+},
+{ 
+    timestamps: true 
 });
 
 

@@ -54,7 +54,8 @@ export const registerUser = async (req, res) => {
 
 // LOGIN
 export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+ try {
+   const { email, password } = req.body;
 
   const user = await User.findOne({ email });
   if (!user || !(await user.matchPassword(password))){
@@ -87,6 +88,9 @@ console.log("User role:", user.role)
     accessToken,
     user: { id: user._id, role: user.role },
   });
+ } catch (error) {
+   res.status(403).json({ message: "Expired or invalid token" });
+ }
 };
 
 // REFRESH TOKEN

@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { sendOTPEmail } from "../utils/sendEmail.js";
 import Report from "../models/reportModel.js";
+import { detectFraud } from "../utils/fraudDetection.js";
 
 //PROPERTY LISTING
 export const listProperty = async (req, res) => {
@@ -14,7 +15,7 @@ export const listProperty = async (req, res) => {
         }
 
     try {
-const { 
+    const { 
         title,
         description,
         listingType,
@@ -26,10 +27,35 @@ const {
         contact,
         status,
         condition,
-    ownership,
-        propertyType
+        ownership,
+        propertyType,
+        blockNumber
         } = req.body;
 
+        const fraudCheck = await detectFraud({ 
+            title,
+            description,
+            listingType,
+            price,
+            currency,
+            location,
+            features,
+            media,
+            contact,
+            status,
+            condition,
+            ownership,
+            propertyType,
+            blockNumber
+        });
+
+            if (fraudCheck.isFraud) {
+            return res.status(400).json({
+                success: false,
+                message: "Fraudulent listing detected",
+                reason: fraudCheck.reason
+            });
+            }
        
         const property = new Property({
             title,
@@ -80,27 +106,6 @@ const {
         res.status(500).json({success: false, message: error.message})
     }
 };
-
-//VIEW ALL PROPERTY LISTED BY ADMIN
-export const viewAllListedProperty = async (req, res) => {
-    try {
-        
-        const property = await Property.find();
-        if (!property) {
-            return res.status(404).json({success: false, message: "No property found"})
-        };
-
-        res.status(200).json({
-            success: true,
-            message: "Property found successfully",
-            property
-        })
-
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-}
 
 // LANDLORD CAN VIEW A PROPERTY LISTED BY ID
 export const viewPropertyById = async (req, res) => {
