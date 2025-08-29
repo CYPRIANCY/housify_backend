@@ -1,11 +1,17 @@
 import User from "../models/userModel.js";
 import Property from "../models/propertyModel.js";
 import Report from "../models/reportModel.js";
+import { detectFraud } from "../utils/fraudDetection.js";
 import { logHistory } from "./historyLogger.js";
 import { v2 as cloudinary } from "cloudinary";
 
 // LIST A PROPERTY
 export const listProperty = async (req, res) => {
+  const token = req.cookies.accessToken;
+  if (!token) {
+    return res.status(401).json({ success: false, message: "User not authenticated: please login" });
+  }
+
   try {
     const {
       title,
@@ -20,7 +26,44 @@ export const listProperty = async (req, res) => {
       propertyType,
       status,
       condition,
+      blockNumber
     } = req.body;
+
+    const fraudCheck = await detectFraud({
+      title,
+      description,
+      listingType,
+      price,
+      currency,
+      location,
+      features,
+      contact,
+      ownership,
+      propertyType,
+      status,
+      condition,
+      blockNumber
+    });
+
+    if (fraudCheck.isFraud) {
+      return res.status(400).json({
+        success: false,
+        message: "Fraudulent listing detected",
+        reason: fraudCheck.reason
+      });
+    }
+
+    // Unified media handling
+    let media = {};
+    if (req.file && req.file.path) {
+      media.images = { url: req.file.path, public_id: req.file.filename };
+    }
+    if (req.files && req.files.video && req.files.video[0]) {
+      media.videos = { url: req.files.video[0].path, public_id: req.files.video[0].filename };
+    }
+    if (req.files && req.files.floorPlan && req.files.floorPlan[0]) {
+      media.floorPlan = { url: req.files.floorPlan[0].path, public_id: req.files.floorPlan[0].filename };
+    }
 
     const property = new Property({
       title,
@@ -35,352 +78,309 @@ export const listProperty = async (req, res) => {
       propertyType,
       status,
       condition,
-      userId: req.user.id,
-      media: {
-        images: req.file && req.file.path ? { url: req.file.path, public_id: req.file.filename } : null,
-        videos: req.files && req.files.video ? { url: req.files.video[0].path, public_id: req.files.video[0].filename } : null,
-      },
+      userId: req.user._id || req.user.id,
+      media,
       metadata: {
         dateListed: new Date(),
         isVerified: false,
         views: 0,
-        status: "active",
-      },
+        status: "active"
+      }
     });
 
     await property.save();
-      
-    // Log history
-   const history = await logHistory({
-  userId: req.user._id,
-  propertyId: property._id,
-  role: req.user.role,
-  action: "Property Listed",
-  notes: "Landlord listed a new property",
-});
 
-console.log("History logged:", history);
-      
+    // Log history
+    await logHistory({
+      userId: req.user._id || req.user.id,
+      propertyId: property._id,
+      role: req.user.role,
+      action: "Property Listed",
+      notes: "Landlord listed a new property",
+    });
+
     res.status(201).json({
       success: true,
       message: "Property listed successfully",
-      property,
-      
+      property
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-//VIEW ALL PROPERTY LISTED BY ADMIN
-export const viewAllListedProperty = async (req, res) => {
-    try {
-        
-        const property = await Property.find();
-        if (!property) {
-            return res.status(404).json({success: false, message: "No property found"})
-        };
-
-        res.status(200).json({
-            success: true,
-            message: "Property found successfully",
-            property
-        })
-
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-}
-
 // LANDLORD CAN VIEW A PROPERTY LISTED BY ID
 export const viewPropertyById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const property = await Property.findById(id).populate("userId", "name email");
 
-    try {
-        const { id } = req.params;
-        const property = await Property.findById(id).populate("userId", "name email");
-
-        if (!property) {
-            return res.status(404).json({ success: false, message: "Property not found" });
-        }
-
-        res.status(200).json({
-            success: true,
-            message: "Property found",
-            property
-        })
-        
-    } catch (error) {
-        res.status(500).json({success: false, message: error.message})
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found" });
     }
-};
 
+    res.status(200).json({
+      success: true,
+      message: "Property found",
+      property
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 // LANDLORD CAN VIEW ALL PROPERTIES LISTED BY ID
 export const getLandlordProperties = async (req, res) => {
+  try {
+    const { landlordId } = req.params;
+    const properties = await Property.find({ userId: landlordId });
 
-    try {
-        const {landlordId} = req.params;
-
-        const properties = await Property.find({ userId: landlordId });
-
-        res.status(200).json({
-            success: true,
-            message: "All properties listed",
-            count: properties.length,
-            properties
-        })
-        
-    } catch (error) {
-        res.status(500).json({success: false, message: error.message})
-    }
+    res.status(200).json({
+      success: true,
+      message: "All properties listed",
+      count: properties.length,
+      properties
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
 };
-
 
 // LANDLORD CAN UPDATE A PROPERTY
 export const updateAPropertyById = async (req, res) => {
-try {
+  try {
     const { id } = req.params;
-     if (!id || id.length === 0) {
-            return res.status(404).json({ success: false, message: "Property ID is missing" });
+    if (!id || id.length === 0) {
+      return res.status(400).json({ success: false, message: "Property ID is missing" });
     }
 
-    const userId = req.user.id;
-    
-    
     const property = await Property.findById(id);
-     if (!property) {
-            return res.status(404).json({ success: false, message: "No property found" });
-        }
-    
+    if (!property) {
+      return res.status(404).json({ success: false, message: "No property found" });
+    }
+
+    // Optional: Only allow owner to update
+    if (property.userId.toString() !== (req.user._id || req.user.id).toString()) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
     const updatedProperty = await Property.findByIdAndUpdate(
-        id,
-        { $set: req.body },
-        { new: true, runValidators: true });
-    await updatedProperty.save();
+      id,
+      { $set: req.body },
+      { new: true, runValidators: true }
+    );
 
     res.status(200).json({
-        success: true,
-        message: "Property updated successfully",
-        updatedProperty
-   })
-    
-} catch (error) {
+      success: true,
+      message: "Property updated successfully",
+      updatedProperty
+    });
+  } catch (error) {
     res.status(500).json({
-        success: false,
-        message: error.message
-    })   
-}
+      success: false,
+      message: error.message
+    });
+  }
 };
-
 
 // LANDLORD CAN DELETE A PROPERTY FROM LISTINGS
 export const deletePropertyById = async (req, res) => {
   try {
-      const { id } = req.params;
-      if (!id || id.length === 0) {
-            return res.status(404).json({ success: false, message: "Property ID is missing" });
+    const { id } = req.params;
+    if (!id || id.length === 0) {
+      return res.status(400).json({ success: false, message: "Property ID is missing" });
     }
-      
-      
-      const deletedProperty = await Property.findById(id);
-      if (!deletedProperty) {
-          return res.status(404).json({
-              success: false,
-              messaeg: "Property not found"
-          });
-      }
-      
-      if (deletedProperty.media.images && deletedProperty.media.images.public_id) {
-          await cloudinary.uploader.destroy(deletedProperty.media.images.public_id);
-      }
 
-      await Property.findByIdAndDelete(deletedProperty);
-      res.status(200).json({
-          success: true,
-          message: "Propert deleted successfully"
-      })
-      
+    const deletedProperty = await Property.findById(id);
+    if (!deletedProperty) {
+      return res.status(404).json({
+        success: false,
+        message: "Property not found"
+      });
+    }
+
+    // Optional: Only allow owner to delete
+    if (deletedProperty.userId.toString() !== (req.user._id || req.user.id).toString()) {
+      return res.status(403).json({ success: false, message: "Unauthorized" });
+    }
+
+    if (deletedProperty.media && deletedProperty.media.images && deletedProperty.media.images.public_id) {
+      await cloudinary.uploader.destroy(deletedProperty.media.images.public_id);
+    }
+
+    await Property.findByIdAndDelete(id);
+    res.status(200).json({
+      success: true,
+      message: "Property deleted successfully"
+    });
   } catch (error) {
-      res.status(500).json({
-          success: false,
-          message: error.message
-    })
-  }  
-
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
-
 
 // ADD PROPERTY TO FAVOURITE
 export const addFavourite = async (req, res) => {
-    try {
-        const propertyId = req.params.propertyId;
-        
-        const userId = req.user.id
-        const user = await User.findById(userId).select("-password");
-        const property = await Property.findById(propertyId)
-        if (!property) {
-            return res.status(404).json({
-                success: false,
-                message: "Property not found"
-            })
-        }
-
-        if (!Array.isArray(user.favourites))  {user.favourites = []};
-        
-        const index = user.favourites.findIndex(
-            (id) => id.toString() === propertyId
-        );
-        
-        if (index > -1) {
-            return res.status(200).json({
-                success: false,
-                message: "Property already in favourite"
-            })
-        } else {
-            user.favourites.push(propertyId);
-            await user.save();
-            return res.status(200).json({
-            success: true,
-            message: "Property added to favourite successfully"
-        })
-        }
-
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        })
+  try {
+    const propertyId = req.params.propertyId;
+    const userId = req.user._id || req.user.id;
+    const user = await User.findById(userId).select("-password");
+    const property = await Property.findById(propertyId);
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        message: "Property not found"
+      });
     }
 
-};
+    if (!Array.isArray(user.favourites)) {
+      user.favourites = [];
+    }
 
+    const index = user.favourites.findIndex(
+      (id) => id.toString() === propertyId
+    );
+
+    if (index > -1) {
+      return res.status(200).json({
+        success: false,
+        message: "Property already in favourite"
+      });
+    } else {
+      user.favourites.push(propertyId);
+      await user.save();
+      return res.status(200).json({
+        success: true,
+        message: "Property added to favourite successfully"
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
 
 // REMOVE PROPERTY FROM FAVOURITES
 export const removeFavourite = async (req, res) => {
-    try {
-        const propertyId = req.params.propertyId;
-        
-        const userId = req.user.id
-        const user = await User.findById(userId).select("-password");
-        const property = await Property.findById(propertyId)
-        if (!property) {
-            return res.status(404).json({
-                success: false,
-                message: "Property not found"
-            })
-        }
-
-         const index = user.favourites.findIndex(
-            (id) => id.toString() === propertyId
-        );
-        
-        if (index > -1) {
-            user.favourites.splice(index, 1);
-            await user.save();
-            return res.status(200).json({
-            success: true,
-            message: "Property removed from favourite successfully"
-        })
-        } else {
-            return res.status(404).json({
-                success: false,
-                message: "Property not in favourite"
-            })
-        }
-
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-     })   
+  try {
+    const propertyId = req.params.propertyId;
+    const userId = req.user._id || req.user.id;
+    const user = await User.findById(userId).select("-password");
+    const property = await Property.findById(propertyId);
+    if (!property) {
+      return res.status(404).json({
+        success: false,
+        message: "Property not found"
+      });
     }
+
+    if (!Array.isArray(user.favourites)) {
+      user.favourites = [];
+    }
+
+    const index = user.favourites.findIndex(
+      (id) => id.toString() === propertyId
+    );
+
+    if (index > -1) {
+      user.favourites.splice(index, 1);
+      await user.save();
+      return res.status(200).json({
+        success: true,
+        message: "Property removed from favourite successfully"
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: "Property not in favourite"
+      });
+    }
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
 
 // GET FAVOURITES
 export const getFavourite = async (req, res) => {
-    try {
-
-        const propertyId = req.params.propertyId;
-        
-        const userId = req.user.id
-        const user = await User.findById(userId).populate("favourites").select("-password");
-        const property = await Property.findById(propertyId)
-        if (!property) {
-            return res.status(404).json({
-                success: false,
-                message: "Property not found"
-            })
-        }
-        
-        const index = user.favourites.findIndex(
-            (id) => id.toString() === propertyId
-        );
-        
-        res.status(200).json({
-            success: true,
-            message: "All favourites",
-            count: index,
-            favourites: user.favourites
-        })
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        })
+  try {
+    const userId = req.user._id || req.user.id;
+    const user = await User.findById(userId).populate("favourites").select("-password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
     }
+    res.status(200).json({
+      success: true,
+      message: "All favourites",
+      count: user.favourites ? user.favourites.length : 0,
+      favourites: user.favourites || []
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
-
-
 
 // A PROPERTY CAN BE REPORTED
 export const reportProperty = async (req, res) => {
-    try {
-        const { propertyId } = req.params;
-        const { reason } = req.body;
+  try {
+    const { propertyId } = req.params;
+    const { reason } = req.body;
 
-        const newReport = new Report({
-            reporter: req.user.id,
-            property: propertyId,
-            reason
-        });
+    const newReport = new Report({
+      reporter: req.user._id || req.user.id,
+      property: propertyId,
+      reason
+    });
 
-        await newReport.save();
+    await newReport.save();
 
-        res.status(201).json({
-            success: true,
-            message: "Property reported",
-            newReport
-        })
-
-    } catch (error) {
-        return res.status(500).json({
-            success: false,
-            message: error.message
-        })
-    }
+    res.status(201).json({
+      success: true,
+      message: "Property reported",
+      newReport
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
 
 // USER CAN GET THEIR REPORTS
 export const getMyReports = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const user = await User.findById(id).select("-password");
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                message: "User not found"
-            })
-        }
-        const reports = await Report.find({ reporter: req.user._id }).populate("property");
-
-        res.status(200).json({
-            success: true,
-            message: "All reports",
-            reports: reports
-        });
-    } catch (error) {
-        
+  try {
+    const userId = req.user._id || req.user.id;
+    const user = await User.findById(userId).select("-password");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
     }
+    const reports = await Report.find({ reporter: userId }).populate("property");
+
+    res.status(200).json({
+      success: true,
+      message: "All reports",
+      reports: reports
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
 };
