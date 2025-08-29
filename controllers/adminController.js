@@ -1,6 +1,7 @@
 import User from '../models/userModel.js';
-// import Property from '../models/Property.js';
-// import Report from '../models/Report.js';
+import Property from "../models/propertyModel.js";
+import Report from "../models/reportModel.js";
+import verification from '../models/verification.js';
 
 // Fetch all users
 export const getAllUsers = async (req, res) => {
@@ -11,6 +12,54 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const listVerifications = async (req, res) => {
+  try {
+    const { status = 'pending' } = req.query;
+    const items = await verification.find({ status })
+      .populate('user', 'name email role kycStatus')
+      .sort({ submittedAt: -1 });
+    res.json({ items });
+  } catch (err) {
+    res.status(500).json({ message: 'List failed', error: err.message });
+  }
+};
+
+// POST /api/admin/verification/:id/review  { action: 'approve'|'reject', note? }
+export const reviewVerification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, note } = req.body;
+
+    const v = await verification.findById(id).populate('user', '_id role');
+    if (!v) return res.status(404).json({ message: 'Verification not found' });
+    if (!['approve','reject'].includes(action)) {
+      return res.status(400).json({ message: 'action must be approve or reject' });
+    }
+
+    v.status = action === 'approve' ? 'approved' : 'rejected';
+    v.notes = note || '';
+    v.reviewer = req.user._id;
+    v.reviewedAt = new Date();
+    await v.save();
+
+    // update user badge flags
+    const user = await User.findById(v.user._id);
+    if (v.status === 'approved') {
+      user.isVerified = true;          // global verified
+      user.kycStatus = 'verified';   // keep legacy field in sync
+    } else {
+      // rejected — keep global verified as-is unless you want to clear it:
+      user.kycStatus = 'rejected';
+    }
+    await user.save();
+
+    res.json({ message: `Verification ${v.status}`, verification: v });
+  } catch (err) {
+    res.status(500).json({ message: 'Review failed', error: err.message });
+  }
+};
+
 
 // Suspend a user
 export const suspendUser = async (req, res) => {
@@ -37,18 +86,39 @@ export const deleteUser = async (req, res) => {
 };
 
 // Verify a user
-export const verifyUser = async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
+// export const verifyUser = async (req, res) => {
+//   try {
+//     const user = await User.findById(req.params.id);
+//     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    user.verificationStatus = 'approved';
-    await user.save();
-    res.json({ message: 'User verified successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
+//     user.verificationStatus = 'approved';
+//     await user.save();
+//     res.json({ message: 'User verified successfully' });
+//   } catch (error) {
+//     res.status(500).json({ message: error.message });
+//   }
+// };
+
+//VIEW ALL PROPERTY LISTED BY ADMIN
+export const viewAllListedProperty = async (req, res) => {
+    try {
+        
+        const property = await Property.find();
+        if (!property) {
+            return res.status(404).json({success: false, message: "No property found"})
+        };
+
+        res.status(200).json({
+            success: true,
+            message: "Property found successfully",
+            property
+        })
+
+
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+}
 
 // Get all pending listings
 export const getPendingListings = async (req, res) => {

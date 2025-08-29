@@ -1,11 +1,111 @@
 import User from "../models/userModel.js";
 import Property from "../models/propertyModel.js";
 import Report from "../models/reportModel.js";
+import { detectFraud } from "../utils/fraudDetection.js";
 import { logHistory } from "./historyLogger.js";
 import { v2 as cloudinary } from "cloudinary";
 
+
 // LIST A PROPERTY
 export const listProperty = async (req, res) => {
+
+    const token = req.cookies.accessToken;
+        if (!token) {
+            return res.status(404).json({success: false, message: "User not found: please login"})
+        }
+
+    try {
+    const { 
+        title,
+        description,
+        listingType,
+        price,
+        currency,
+        location,
+        features,
+        media,
+        contact,
+        status,
+        condition,
+        ownership,
+        propertyType,
+        blockNumber
+        } = req.body;
+
+        const fraudCheck = await detectFraud({ 
+            title,
+            description,
+            listingType,
+            price,
+            currency,
+            location,
+            features,
+            media,
+            contact,
+            status,
+            condition,
+            ownership,
+            propertyType,
+            blockNumber
+        });
+
+            if (fraudCheck.isFraud) {
+            return res.status(400).json({
+                success: false,
+                message: "Fraudulent listing detected",
+                reason: fraudCheck.reason
+            });
+            }
+       
+        const property = new Property({
+            title,
+            description,
+            listingType,
+            price,
+            currency,
+            location,
+            features,
+            media,
+            contact,
+            ownership,
+            propertyType,
+            status,
+            condition,
+            userId: req.user.id,
+            media: {
+            images:{
+                    url: req.file.path,
+                    public_id: req.file.filename
+                },
+            videoTour:{
+                    url: req.file.path,
+                    public_id: req.file.filename
+                },
+            floorPlan:{
+                    url: req.file.path,
+                    public_id: req.file.filename
+            }
+            },
+            metadata: {
+                dateListed: new Date(),
+                isVerified: false,
+                views: 0,
+                status: "active"
+            }
+        });
+        await property.save();
+
+        res.status(201).json({
+            success: true,
+            message: "Property listed successfully",
+            property
+         }
+            
+        )  
+    } catch (error) {
+        res.status(500).json({success: false, message: error.message})
+    }
+
   try {
     const {
       title,
@@ -70,28 +170,8 @@ console.log("History logged:", history);
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
+
 };
-
-//VIEW ALL PROPERTY LISTED BY ADMIN
-export const viewAllListedProperty = async (req, res) => {
-    try {
-        
-        const property = await Property.find();
-        if (!property) {
-            return res.status(404).json({success: false, message: "No property found"})
-        };
-
-        res.status(200).json({
-            success: true,
-            message: "Property found successfully",
-            property
-        })
-
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-}
 
 // LANDLORD CAN VIEW A PROPERTY LISTED BY ID
 export const viewPropertyById = async (req, res) => {
