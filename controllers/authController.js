@@ -2,7 +2,7 @@ import User from "../models/userModel.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import { sendOTPEmail } from "../utils/sendEmail.js";
+import { sendOTPEmail, sendWelcomeEmail } from "../utils/sendEmail.js";
 
 // Generate short-lived access token
 const generateAccessToken = (user) => {
@@ -149,6 +149,13 @@ export const verifyEmailOTP = async (req, res) => {
     user.otp = undefined;
     user.otpExpires = undefined;
     await user.save();
+
+    try {
+      await sendWelcomeEmail(email, user.name);
+    } catch (emailError) {
+      // Optionally handle email sending failure
+      return res.status(500).json({ message: "Failed to Send Welcome Email" });
+    }
 
     res.status(200).json({ message: "Email verified successfully" });
   } catch (error) {

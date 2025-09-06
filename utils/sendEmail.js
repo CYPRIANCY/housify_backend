@@ -25,7 +25,7 @@ export const sendOTPEmail = async (email, subject, otp) => {
   const html = emailWrapper(`
     <p>Hello,</p>
     <p>Your OTP for verification is:</p>
-    <h2>${otp}</h2>
+    <h2>${otp}</h2>.
     <p>This OTP will expire in 10 minutes.</p>
   `);
 
