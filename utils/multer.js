@@ -1,7 +1,7 @@
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from "multer-storage-cloudinary";
-// import cloudinary from "./cloudinary.js";
+import cloudinary from "../cloudinary.js";
 
 
 
@@ -27,4 +27,5 @@ const videoStorage = new CloudinaryStorage({
 
 export const uploadImage = multer({ storage: imageStorage });
 export const uploadVideo = multer({ storage: videoStorage });
+
 
