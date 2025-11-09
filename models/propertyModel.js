@@ -37,14 +37,14 @@ const propertySchema = new mongoose.Schema({
     media: {
         images: [
     {
-      url: { type: String, required: true },
-      public_id: { type: String, required: true }
+      url: { type: String },
+      public_id: { type: String }
     }
   ],
   videos: [
     {
-      url: { type: String, required: true },
-      public_id: { type: String, required: true }
+      url: { type: String},
+      public_id: { type: String }
     }
   ]
 },
@@ -97,3 +97,4 @@ const propertySchema = new mongoose.Schema({
 
 
 export default mongoose.model("Property", propertySchema);
+
