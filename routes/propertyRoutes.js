@@ -1,6 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
-import upload from "../utils/multer.js";
+import {upload} from "../utils/multer.js";
 
 import {
   addFavourite,
