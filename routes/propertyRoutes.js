@@ -1,6 +1,6 @@
 import express from 'express';
 import { protect } from '../middleware/authMiddleware.js';
-import {upload} from "../utils/multer.js";
+
 
 import {
   addFavourite,
@@ -21,10 +21,12 @@ const router = express.Router();
 // ROUTES FOR PROPERTY LISTINGS
 router.post(
   "/listings", protect,
-  upload.fields([
-    { name: "images", maxCount: 10 },
-    { name: "videos", maxCount: 5 },
-  ]),
+  uploadImage.array("images", 10),
+  uploadVideo.array("videos", 5),
+  // upload.fields([
+  //   { name: "images", maxCount: 10 },
+  //   { name: "videos", maxCount: 5 },
+  // ]),
   // uploadImage.single("image"),
   // uploadVideo.single("video"),
   listProperty
