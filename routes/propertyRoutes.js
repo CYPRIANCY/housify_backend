@@ -20,8 +20,12 @@ const router = express.Router();
 // ROUTES FOR PROPERTY LISTINGS
 router.post(
   "/listings", protect,
-  uploadImage.single("image"),
-  uploadVideo.single("video"),
+  upload.fields([
+    { name: "images", maxCount: 10 },
+    { name: "videos", maxCount: 5 },
+  ]),
+  // uploadImage.single("image"),
+  // uploadVideo.single("video"),
   listProperty
 );
 router.get("/listings/:landlordId/properties", protect, getLandlordProperties);
