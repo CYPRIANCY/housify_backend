@@ -18,6 +18,15 @@ const generateRefreshToken = (user) => {
   });
 };
 
+// Consistent cookie options used for access and refresh tokens
+const cookieOptions = (maxAge) => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  path: "/",
+  maxAge,
+});
+
 // REGISTER
 export const registerUser = async (req, res) => {
   try {
@@ -79,17 +88,11 @@ export const loginUser = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000, // 15 mins
+      ...cookieOptions(15 * 60 * 1000), // 15 mins
     });
 
     res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      ...cookieOptions(7 * 24 * 60 * 60 * 1000), // 7 days
     });
 
     res.status(200).json({
@@ -113,12 +116,7 @@ export const refreshAccessToken = async (req, res) => {
     if (!user) return res.status(401).json({ message: "Invalid token" });
 
     const newAccessToken = generateAccessToken(user);
-    res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
-    });
+    res.cookie("accessToken", newAccessToken, cookieOptions(15 * 60 * 1000));
 
     res.status(200).json({ 
       message: "Token refreshed",
@@ -131,8 +129,9 @@ export const refreshAccessToken = async (req, res) => {
 
 // LOGOUT
 export const logoutUser = (req, res) => {
-  res.clearCookie("accessToken");
-  res.clearCookie("refreshToken");
+  // Clear cookies using the same attributes they were set with so browsers will remove them
+  res.clearCookie("accessToken", { path: "/", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", secure: process.env.NODE_ENV === "production" });
+  res.clearCookie("refreshToken", { path: "/", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", secure: process.env.NODE_ENV === "production" });
   res.status(200).json({ message: "Logged out successfully" });
 };
 
