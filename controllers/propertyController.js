@@ -161,26 +161,44 @@ export const listProperty = async (req, res) => {
       });
     }
 
-    // ✅ Step 2: Handle uploaded files (images/videos)
-    let media = {
-      images: [],
-      videos: [],
-    };
+    // // ✅ Step 2: Handle uploaded files (images/videos)
+    // let media = {
+    //   images: [],
+    //   videos: [],
+    // };
 
-    // Multiple image uploads
-    if (req.files && req.files.images) {
-      media.images = req.files.images.map((file) => ({
-        url: file.path,
-        public_id: file.filename,
-      }));
+    // // Multiple image uploads
+    // if (req.files && req.files.images) {
+    //   media.images = req.files.images.map((file) => ({
+    //     url: file.path,
+    //     public_id: file.filename,
+    //   }));
+    // }
+
+      let media = {};
+    
+    // Handle image field
+    if (req.files && req.files.image && req.files.image[0]) {
+      media.images = { 
+        url: req.files.image[0].path, 
+        public_id: req.files.image[0].filename 
+      };
     }
 
-    // Multiple video uploads
-    if (req.files && req.files.videos) {
-      media.videos = req.files.videos.map((file) => ({
-        url: file.path,
-        public_id: file.filename,
-      }));
+    // // Multiple video uploads
+    // if (req.files && req.files.videos) {
+    //   media.videos = req.files.videos.map((file) => ({
+    //     url: file.path,
+    //     public_id: file.filename,
+    //   }));
+    // }
+    
+    // Handle video field
+    if (req.files && req.files.video && req.files.video[0]) {
+      media.videos = { 
+        url: req.files.video[0].path, 
+        public_id: req.files.video[0].filename 
+      };
     }
 
     // ✅ Step 3: Create property record

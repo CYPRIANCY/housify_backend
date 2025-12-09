@@ -1,7 +1,38 @@
+// import multer from 'multer';
+// // import { v2 as cloudinary } from 'cloudinary';
+// import { CloudinaryStorage } from "multer-storage-cloudinary";
+// import cloudinary from "./cloudinary.js";
+
+
+
+// const imageStorage = new CloudinaryStorage({
+//   cloudinary: cloudinary,
+//   params: {
+//     folder: "properties/images",
+//     allowed_formats: ["jpg", "jpeg", "png"],
+//     resource_type: "image",
+//   },
+// });
+
+// // Storage for videos
+// const videoStorage = new CloudinaryStorage({
+//   cloudinary: cloudinary,
+//   params: {
+//     folder: "properties/videos",
+//     allowed_formats: ["mp4", "avi", "mov", "mkv"],
+//     resource_type: "video",
+//   },
+// });
+
+
+// export const uploadImage = multer({ storage: imageStorage });
+// export const uploadVideo = multer({ storage: videoStorage });
+
+
 import multer from 'multer';
-// import { v2 as cloudinary } from 'cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
 import { CloudinaryStorage } from "multer-storage-cloudinary";
-import cloudinary from "./cloudinary.js";
+// import cloudinary from "./cloudinary.js";
 
 
 
@@ -24,8 +55,32 @@ const videoStorage = new CloudinaryStorage({
   },
 });
 
+// Combined storage that can handle both images and videos
+const combinedStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: (req, file) => {
+    if (file.mimetype.startsWith('image/')) {
+      return {
+        folder: "properties/images",
+        allowed_formats: ["jpg", "jpeg", "png"],
+        resource_type: "image",
+      };
+    } else if (file.mimetype.startsWith('video/')) {
+      return {
+        folder: "properties/videos",
+        allowed_formats: ["mp4", "avi", "mov", "mkv"],
+        resource_type: "video",
+      };
+    }
+    // Default to auto
+    return {
+      folder: "properties",
+      resource_type: "auto",
+    };
+  },
+});
+
 
 export const uploadImage = multer({ storage: imageStorage });
 export const uploadVideo = multer({ storage: videoStorage });
-
-
+export const uploadProperty = multer({ storage: combinedStorage });
