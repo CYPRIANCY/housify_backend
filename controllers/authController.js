@@ -82,7 +82,7 @@ export const loginUser = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Lax",
-      maxAge: 5 * 60 * 1000, // 15 mins
+      maxAge: 15 * 60 * 1000, // 15 mins
     });
 
     res.cookie("refreshToken", refreshToken, {
