@@ -23,7 +23,7 @@ router.delete('/users/:id', protect, authorizeRoles('admin'), deleteUser);
 // router.put('/users/:id/verify', protect, authorizeRoles('admin'), verifyUser);
 
 router.get('/verification', protect, authorizeRoles('admin'), listVerifications); // ?status=pending|approved|rejected
-router.post('/verification:id/review', protect, authorizeRoles('admin'), reviewVerification);
+router.post('/verification/:id/review', protect, authorizeRoles('admin'), reviewVerification);
    
 // ONLY ADMIN CAN VIEW ALL PROPERTY
 router.get("/listings", protect, authorizeRoles("admin"), viewAllListedProperty);
