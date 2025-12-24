@@ -161,11 +161,13 @@ export const getAnalytics = async (req, res) => {
 
     res.json({
       success: true,
-      totalUsers,
-      totalListings,
-      approvedListings,
-      pendingListings,
-      totalReports
+      data: [
+              totalUsers,
+              totalListings,
+              approvedListings,
+              pendingListings,
+              totalReports
+            ]
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
