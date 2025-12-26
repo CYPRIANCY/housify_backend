@@ -3,6 +3,52 @@ import Property from "../models/propertyModel.js";
 import Report from "../models/reportModel.js";
 import Verification from '../models/verification.js'; // Use uppercase for consistency
 
+
+// Fetch all users with their verification status
+export const getUsersWithVerificationStatus = async (req, res) => {
+  try {
+    const users = await User.find().select('-password');
+    
+    // Get verification status for each user
+    const usersWithVerification = await Promise.all(
+      users.map(async (user) => {
+        const verification = await Verification.findOne({ user: user._id })
+          .sort({ submittedAt: -1 });
+        
+        return {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          isVerified: user.isVerified,
+          kycStatus: user.kycStatus,
+          accountStatus: user.accountStatus,
+          createdAt: user.createdAt,
+          verification: verification ? {
+            _id: verification._id,
+            status: verification.status,
+            idType: verification.idType,
+            roleAtSubmission: verification.roleAtSubmission,
+            submittedAt: verification.submittedAt,
+            reviewedAt: verification.reviewedAt,
+            notes: verification.notes
+          } : null
+        };
+      })
+    );
+
+    res.json({ 
+      success: true, 
+      totalUsers: usersWithVerification.length,
+      verifiedUsers: usersWithVerification.filter(u => u.isVerified).length,
+      users: usersWithVerification 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 // Fetch all users
 export const getAllUsers = async (req, res) => {
   try {
