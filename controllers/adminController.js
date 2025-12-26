@@ -37,10 +37,10 @@ export const getUsersWithVerificationStatus = async (req, res) => {
       })
     );
 
-    res.json({ 
+    res.status(201).json({ 
       success: true, 
       totalUsers: usersWithVerification.length,
-      verifiedUsers: usersWithVerification.filter(u => u.isVerified).length,
+      verifiedUsers: usersWithVerification.filter(u => u.verification && u.verification.status === 'approved').length,
       users: usersWithVerification 
     });
   } catch (error) {
