@@ -14,6 +14,17 @@ const userSchema = new mongoose.Schema(
       default: "tenant",
     },
     isVerified: { type: Boolean, default: false },
+    kycStatus: {
+      type: String,
+      enum: ["pending", "verified", "rejected"],
+      default: null,
+    },
+    accountStatus: {
+      type: String,
+      enum: ["active", "suspended"],
+      default: "active",
+    },
+
 
     otp: String,
     otpExpires: Date,

@@ -49,6 +49,8 @@ export const reviewVerification = async (req, res) => {
       user.isVerified = true;          // global verified
       user.kycStatus = 'verified';   // keep legacy field in sync
     } else {
+      
+      user.isVerified = false;   // ensure not verified on reject
       user.kycStatus = 'rejected';
     }
     await user.save();
