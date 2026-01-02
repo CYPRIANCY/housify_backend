@@ -174,9 +174,18 @@ export const approveListing = async (req, res) => {
 };
 
 // Reject listing
+// Reject listing
 export const rejectListing = async (req, res) => {
   try {
-    const property = await Property.findByIdAndUpdate(req.params.id, { status: 'rejected' }, { new: true });
+    const property = await Property.findByIdAndUpdate(
+      req.params.id,
+      { 
+        status: "rejected", 
+        "metadata.isVerified": false,
+        "metadata.status": "inactive"
+      },
+      { new: true }
+    );
     if (!property) {
       return res.status(404).json({ success: false, message: "Property not found" });
     }
