@@ -252,6 +252,42 @@ export const listProperty = async (req, res) => {
   }
 };
 
+// VIEW ALL PROPERTIES
+export const getAllProperties = async (req, res) => {
+  try {
+    const properties = await Property.find().sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      message: "Properties fetched successfully",
+      count: properties.length,
+      properties
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// GET VERIFIED PROPERTIES
+export const getVerifiedProperties = async (req, res) => {
+  try {
+    const properties = await Property.find({ "metadata.isVerified": true }).sort({ createdAt: -1 });
+    res.status(200).json({
+      success: true,
+      message: "Verified properties fetched successfully",
+      count: properties.length,
+      properties
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
 // LANDLORD CAN VIEW A PROPERTY LISTED BY ID
 export const viewPropertyById = async (req, res) => {
   try {

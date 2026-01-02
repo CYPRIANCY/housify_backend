@@ -5,6 +5,8 @@ import { protect } from '../middleware/authMiddleware.js';
 import {
   addFavourite,
   deletePropertyById,
+  getAllProperties,
+  getVerifiedProperties,
   getFavourite,
   getLandlordProperties as getLandlordProperties,
   getMyReports,
@@ -38,13 +40,17 @@ router.post(
   protect,
   uploadProperty.fields([
     { name: "image", maxCount: 10 },
-    { name: "video", maxCount: 1 }
+    { name: "video", maxCount: 2 },
   ]),
   listProperty
 );
 
+
+router.get("/all", getAllProperties);
+router.get("/verified", getVerifiedProperties);
 router.get("/listings/:landlordId/properties", protect, getLandlordProperties);
-router.get("/listings/detail/:id", protect, viewPropertyById);
+router.get("/listings/detail/:id", viewPropertyById);
+
 router.put("/listings/update/:id", protect, updateAPropertyById);
 router.delete("/listings/delete/:id", protect, deletePropertyById);
 
