@@ -59,7 +59,7 @@ router.post("/upload/image", protect, uploadImage.single("image"));
 router.post("/upload/video", protect, uploadVideo.single("video"));
 
 // ROUTES FOR FAVOURITES
-router.get("/listings/:propertyId/favourite", protect, getFavourite);
+router.get("/listings/favourite", protect, getFavourite);
 router.post("/listings/:propertyId/favourite", protect, addFavourite);
 router.delete("/listings/:propertyId/favourite", protect, removeFavourite);
 
