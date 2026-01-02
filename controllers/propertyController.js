@@ -273,14 +273,20 @@ export const getAllProperties = async (req, res) => {
 // GET VERIFIED PROPERTIES
 export const getVerifiedProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ "metadata.isVerified": true }).sort({ createdAt: -1 });
+    const properties = await Property.find({
+      status: "approved"
+    }).sort({ createdAt: -1 });
+    
+    console.log("Fetching approved properties, found:", properties.length);
+    
     res.status(200).json({
       success: true,
       message: "Verified properties fetched successfully",
       count: properties.length,
-      properties
+      properties,
     });
   } catch (error) {
+    console.error("Error fetching verified properties:", error);
     res.status(500).json({
       success: false,
       message: error.message
