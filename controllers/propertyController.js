@@ -295,6 +295,7 @@ export const getVerifiedProperties = async (req, res) => {
 };
 
 // LANDLORD CAN VIEW A PROPERTY LISTED BY ID
+// LANDLORD CAN VIEW A PROPERTY LISTED BY ID
 export const viewPropertyById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -303,6 +304,10 @@ export const viewPropertyById = async (req, res) => {
     if (!property) {
       return res.status(404).json({ success: false, message: "Property not found" });
     }
+
+    // Increment view count
+    property.metadata.views = (property.metadata.views || 0) + 1;
+    await property.save();
 
     res.status(200).json({
       success: true,

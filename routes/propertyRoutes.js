@@ -64,7 +64,6 @@ router.post("/listings/:propertyId/favourite", protect, addFavourite);
 router.delete("/listings/:propertyId/favourite", protect, removeFavourite);
 
 
-
 // ROUTES FOR REPORTS
 router.get("/reports/:id", protect, getMyReports);
 router.post("/report/:propertyId", protect, reportProperty);
