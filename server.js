@@ -26,7 +26,7 @@ app.use(helmet());
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: process.env.CLIENT_URL || 'https://hosify-1sgc.vercel.app/',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
   })
