@@ -1,22 +1,32 @@
 {
-  "name": "security",
+  "name": "hosify-backend",
   "version": "1.0.0",
+  "description": "Production-ready REST API backend for the Hosify real estate platform.",
   "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "check": "node --check server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "keywords": [
+    "real-estate",
+    "property-management",
+    "rest-api",
+    "nodejs",
+    "express",
+    "mongodb",
+    "mongoose",
+    "authentication",
+    "jwt"
+  ],
+  "author": "Cyprian Sesugh Akpen",
+  "license": "MIT",
   "dependencies": {
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.30.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
@@ -29,10 +39,14 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "nodemailer": "^7.0.5",
-    "nodemon": "^3.1.10",
-    "rate-limit": "^0.1.1",
     "resend": "^4.7.0",
     "validator": "^13.15.15",
     "xss-clean": "^0.1.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=22.0.0"
   }
 }
