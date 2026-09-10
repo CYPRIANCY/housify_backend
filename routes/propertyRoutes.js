@@ -17,14 +17,27 @@ import {
   viewPropertyById as viewPropertyById
 } from '../controllers/propertyController.js';
 import { uploadImage, uploadVideo, uploadProperty  } from '../utils/multer.js';
-import { authorizeRoles } from '../middleware/roleMiddleware.js';
 
 const router = express.Router();
 
 // ROUTES FOR PROPERTY LISTINGS
+// router.post(
+//   "/listings", protect,
+//   uploadImage.array("images", 10),
+//   uploadVideo.array("videos", 5),
+//   // upload.fields([
+//   //   { name: "images", maxCount: 10 },
+//   //   { name: "videos", maxCount: 5 },
+//   // ]),
+//   // uploadImage.single("image"),
+//   // uploadVideo.single("video"),
+//   listProperty
+// );
+
+// ROUTES FOR PROPERTY LISTINGS
 router.post(
   "/listings", 
-  protect, authorizeRoles('landlord','admin'),
+  protect,
   uploadProperty.fields([
     { name: "image", maxCount: 10 },
     { name: "video", maxCount: 2 },

@@ -5,6 +5,110 @@ import { detectFraud } from "../utils/fraudDetection.js";
 import { logHistory } from "./historyLogger.js";
 import { v2 as cloudinary } from "cloudinary";
 
+// LIST A PROPERTY
+// export const listProperty = async (req, res) => {
+//   const token = req.cookies.accessToken;
+//   if (!token) {
+//     return res.status(401).json({ success: false, message: "User not authenticated: please login" });
+//   }
+
+//   try {
+//     const {
+//       title,
+//       description,
+//       listingType,
+//       price,
+//       currency,
+//       location,
+//       features,
+//       contact,
+//       ownership,
+//       propertyType,
+//       status,
+//       condition,
+//       blockNumber
+//     } = req.body;
+
+//     const fraudCheck = await detectFraud({
+//       title,
+//       description,
+//       listingType,
+//       price,
+//       currency,
+//       location,
+//       features,
+//       contact,
+//       ownership,
+//       propertyType,
+//       status,
+//       condition,
+//       blockNumber
+//     });
+
+//     if (fraudCheck.isFraud) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Fraudulent listing detected",
+//         reason: fraudCheck.reason
+//       });
+//     }
+
+//     // Unified media handling
+//     let media = {};
+//     if (req.file && req.file.path) {
+//       media.images = { url: req.file.path, public_id: req.file.filename };
+//     }
+//     if (req.files && req.files.video && req.files.video[0]) {
+//       media.videos = { url: req.files.video[0].path, public_id: req.files.video[0].filename };
+//     }
+//     if (req.files && req.files.floorPlan && req.files.floorPlan[0]) {
+//       media.floorPlan = { url: req.files.floorPlan[0].path, public_id: req.files.floorPlan[0].filename };
+//     }
+
+//     const property = new Property({
+//       title,
+//       description,
+//       listingType,
+//       price,
+//       currency,
+//       location,
+//       features,
+//       contact,
+//       ownership,
+//       propertyType,
+//       status,
+//       condition,
+//       userId: req.user._id || req.user.id,
+//       media,
+//       metadata: {
+//         dateListed: new Date(),
+//         isVerified: false,
+//         views: 0,
+//         status: "active"
+//       }
+//     });
+
+//     await property.save();
+
+//     // Log history
+//     await logHistory({
+//       userId: req.user._id || req.user.id,
+//       propertyId: property._id,
+//       role: req.user.role,
+//       action: "Property Listed",
+//       notes: "Landlord listed a new property",
+//     });
+
+//     res.status(201).json({
+//       success: true,
+//       message: "Property listed successfully",
+//       property
+//     });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 // ✅ Create Property Listing
 export const listProperty = async (req, res) => {
   const token = req.cookies.accessToken;
@@ -57,6 +161,20 @@ export const listProperty = async (req, res) => {
       });
     }
 
+    // // ✅ Step 2: Handle uploaded files (images/videos)
+    // let media = {
+    //   images: [],
+    //   videos: [],
+    // };
+
+    // // Multiple image uploads
+    // if (req.files && req.files.images) {
+    //   media.images = req.files.images.map((file) => ({
+    //     url: file.path,
+    //     public_id: file.filename,
+    //   }));
+    // }
+
       let media = {};
     
     // Handle image field
@@ -67,6 +185,13 @@ export const listProperty = async (req, res) => {
       };
     }
 
+    // // Multiple video uploads
+    // if (req.files && req.files.videos) {
+    //   media.videos = req.files.videos.map((file) => ({
+    //     url: file.path,
+    //     public_id: file.filename,
+    //   }));
+    // }
     
     // Handle video field
     if (req.files && req.files.video && req.files.video[0]) {
