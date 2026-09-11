@@ -1,86 +1,73 @@
-// import multer from 'multer';
-// // import { v2 as cloudinary } from 'cloudinary';
-// import { CloudinaryStorage } from "multer-storage-cloudinary";
-// import cloudinary from "./cloudinary.js";
+import multer from "multer";
 
+const storage = multer.memoryStorage();
 
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/jpg",
+    "video/mp4",
+    "video/quicktime",
+    "video/x-msvideo",
+    "video/x-matroska",
+  ];
 
-// const imageStorage = new CloudinaryStorage({
-//   cloudinary: cloudinary,
-//   params: {
-//     folder: "properties/images",
-//     allowed_formats: ["jpg", "jpeg", "png"],
-//     resource_type: "image",
-//   },
-// });
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error(
+        "Unsupported file type. Only JPG, JPEG, PNG, MP4, MOV, AVI and MKV files are allowed."
+      ),
+      false
+    );
+  }
+};
 
-// // Storage for videos
-// const videoStorage = new CloudinaryStorage({
-//   cloudinary: cloudinary,
-//   params: {
-//     folder: "properties/videos",
-//     allowed_formats: ["mp4", "avi", "mov", "mkv"],
-//     resource_type: "video",
-//   },
-// });
-
-
-// export const uploadImage = multer({ storage: imageStorage });
-// export const uploadVideo = multer({ storage: videoStorage });
-
-
-import multer from 'multer';
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-// import cloudinary from "./cloudinary.js";
-
-
-
-const imageStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "properties/images",
-    allowed_formats: ["jpg", "jpeg", "png"],
-    resource_type: "image",
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB per file
   },
 });
 
-// Storage for videos
-const videoStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: {
-    folder: "properties/videos",
-    allowed_formats: ["mp4", "avi", "mov", "mkv"],
-    resource_type: "video",
-  },
-});
+export const uploadImage = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg"];
 
-// Combined storage that can handle both images and videos
-const combinedStorage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: (req, file) => {
-    if (file.mimetype.startsWith('image/')) {
-      return {
-        folder: "properties/images",
-        allowed_formats: ["jpg", "jpeg", "png"],
-        resource_type: "image",
-      };
-    } else if (file.mimetype.startsWith('video/')) {
-      return {
-        folder: "properties/videos",
-        allowed_formats: ["mp4", "avi", "mov", "mkv"],
-        resource_type: "video",
-      };
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only JPG, JPEG and PNG images are allowed."), false);
     }
-    // Default to auto
-    return {
-      folder: "properties",
-      resource_type: "auto",
-    };
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB
   },
 });
 
+export const uploadVideo = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      "video/mp4",
+      "video/quicktime",
+      "video/x-msvideo",
+      "video/x-matroska",
+    ];
 
-export const uploadImage = multer({ storage: imageStorage });
-export const uploadVideo = multer({ storage: videoStorage });
-export const uploadProperty = multer({ storage: combinedStorage });
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only MP4, MOV, AVI and MKV videos are allowed."), false);
+    }
+  },
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50 MB
+  },
+});
+
+export const uploadProperty = upload;

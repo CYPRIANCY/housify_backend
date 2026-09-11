@@ -4,6 +4,7 @@ import Report from "../models/reportModel.js";
 import { detectFraud } from "../utils/fraudDetection.js";
 import { logHistory } from "./historyLogger.js";
 import { v2 as cloudinary } from "cloudinary";
+import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 
 // LIST A PROPERTY
 // export const listProperty = async (req, res) => {
@@ -161,43 +162,36 @@ export const listProperty = async (req, res) => {
       });
     }
 
-    // // ✅ Step 2: Handle uploaded files (images/videos)
-    // let media = {
-    //   images: [],
-    //   videos: [],
-    // };
+    // Handle uploaded media
+    const media = {};
 
-    // // Multiple image uploads
-    // if (req.files && req.files.images) {
-    //   media.images = req.files.images.map((file) => ({
-    //     url: file.path,
-    //     public_id: file.filename,
-    //   }));
-    // }
+    if (req.files?.image?.length) {
+      const image = req.files.image[0];
 
-      let media = {};
-    
-    // Handle image field
-    if (req.files && req.files.image && req.files.image[0]) {
-      media.images = { 
-        url: req.files.image[0].path, 
-        public_id: req.files.image[0].filename 
+      const imageResult = await uploadToCloudinary(
+        image.buffer,
+        "properties/images",
+        "image"
+      );
+
+      media.images = {
+        url: imageResult.secure_url,
+        public_id: imageResult.public_id,
       };
     }
 
-    // // Multiple video uploads
-    // if (req.files && req.files.videos) {
-    //   media.videos = req.files.videos.map((file) => ({
-    //     url: file.path,
-    //     public_id: file.filename,
-    //   }));
-    // }
-    
-    // Handle video field
-    if (req.files && req.files.video && req.files.video[0]) {
-      media.videos = { 
-        url: req.files.video[0].path, 
-        public_id: req.files.video[0].filename 
+    if (req.files?.video?.length) {
+      const video = req.files.video[0];
+
+      const videoResult = await uploadToCloudinary(
+        video.buffer,
+        "properties/videos",
+        "video"
+      );
+
+      media.videos = {
+        url: videoResult.secure_url,
+        public_id: videoResult.public_id,
       };
     }
 

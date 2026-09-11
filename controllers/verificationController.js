@@ -1,21 +1,28 @@
-import Verification, { ID_TYPES } from '../models/verification.js';
+import Verification, { ID_TYPES } from "../models/verification.js";
 import User from "../models/userModel.js";
-import cloudinary from '../utils/cloudinary.js';
-import fs from 'fs/promises';
+import cloudinary from "../utils/cloudinary.js";
+import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 
 const uploadMany = async (files, folder) => {
   const out = [];
-  for (const f of files || []) {
-    const res = await cloudinary.uploader.upload(f.path, { folder });
-    out.push({ label: f.originalname, url: res.secure_url, public_id: res.public_id });
-    await fs.unlink(f.path).catch(()=>{});
+
+  for (const file of files || []) {
+    const result = await uploadToCloudinary(
+      file.buffer,
+      folder,
+      "auto"
+    );
+
+    out.push({
+      label: file.originalname,
+      url: result.secure_url,
+      public_id: result.public_id,
+    });
   }
+
   return out;
 };
 
-// POST /api/verification/submit (multipart/form-data)
-// Fields: idType (required), roleAware: landlord may include proofOfOwnership files
-// Files: idDocs[] , proofDocs[]
 export const submitVerification = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
