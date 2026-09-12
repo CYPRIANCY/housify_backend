@@ -163,37 +163,48 @@ export const listProperty = async (req, res) => {
     }
 
     // Handle uploaded media
-    const media = {};
+    const media = {
+  images: [],
+  videos: [],
+};
 
-    if (req.files?.image?.length) {
-      const image = req.files.image[0];
-
+if (req.files?.image?.length) {
+  const imageUploads = await Promise.all(
+    req.files.image.map(async (image) => {
       const imageResult = await uploadToCloudinary(
         image.buffer,
         "properties/images",
         "image"
       );
 
-      media.images = {
+      return {
         url: imageResult.secure_url,
         public_id: imageResult.public_id,
       };
-    }
+    })
+  );
 
-    if (req.files?.video?.length) {
-      const video = req.files.video[0];
+  media.images = imageUploads;
+}
 
+if (req.files?.video?.length) {
+  const videoUploads = await Promise.all(
+    req.files.video.map(async (video) => {
       const videoResult = await uploadToCloudinary(
         video.buffer,
         "properties/videos",
         "video"
       );
 
-      media.videos = {
+      return {
         url: videoResult.secure_url,
         public_id: videoResult.public_id,
       };
-    }
+    })
+  );
+
+  media.videos = videoUploads;
+}
 
     // ✅ Step 3: Create property record
     const property = new Property({
@@ -371,36 +382,72 @@ export const updateAPropertyById = async (req, res) => {
 export const deletePropertyById = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!id || id.length === 0) {
-      return res.status(400).json({ success: false, message: "Property ID is missing" });
-    }
 
-    const deletedProperty = await Property.findById(id);
-    if (!deletedProperty) {
-      return res.status(404).json({
+    if (!id || id.length === 0) {
+      return res.status(400).json({
         success: false,
-        message: "Property not found"
+        message: "Property ID is missing",
       });
     }
 
-    // Optional: Only allow owner to delete
-    if (deletedProperty.userId.toString() !== (req.user._id || req.user.id).toString()) {
-      return res.status(403).json({ success: false, message: "Unauthorized" });
+    const deletedProperty = await Property.findById(id);
+
+    if (!deletedProperty) {
+      return res.status(404).json({
+        success: false,
+        message: "Property not found",
+      });
     }
 
-    if (deletedProperty.media && deletedProperty.media.images && deletedProperty.media.images.public_id) {
-      await cloudinary.uploader.destroy(deletedProperty.media.images.public_id);
+    // Only allow the property owner to delete it
+    const currentUserId = (req.user._id || req.user.id).toString();
+
+    if (deletedProperty.userId.toString() !== currentUserId) {
+      return res.status(403).json({
+        success: false,
+        message: "Unauthorized",
+      });
     }
 
+    // Delete all property images from Cloudinary
+    if (deletedProperty.media?.images?.length) {
+      await Promise.all(
+        deletedProperty.media.images
+          .filter((image) => image.public_id)
+          .map((image) =>
+            cloudinary.uploader.destroy(image.public_id, {
+              resource_type: "image",
+            })
+          )
+      );
+    }
+
+    // Delete all property videos from Cloudinary
+    if (deletedProperty.media?.videos?.length) {
+      await Promise.all(
+        deletedProperty.media.videos
+          .filter((video) => video.public_id)
+          .map((video) =>
+            cloudinary.uploader.destroy(video.public_id, {
+              resource_type: "video",
+            })
+          )
+      );
+    }
+
+    // Delete property from MongoDB
     await Property.findByIdAndDelete(id);
-    res.status(200).json({
+
+    return res.status(200).json({
       success: true,
-      message: "Property deleted successfully"
+      message: "Property deleted successfully",
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Error deleting property:", error);
+
+    return res.status(500).json({
       success: false,
-      message: error.message
+      message: "Failed to delete property",
     });
   }
 };
